@@ -61,7 +61,9 @@ describe("surrealql", function()
       assert.equals(defaults.treesitter.branch, parser_configs.surrealql.install_info.branch)
     end)
 
-    it("does not overwrite an existing registration", function()
+    it("updates install_info on an existing registration", function()
+      -- A later call (e.g. from setup() with user opts) must override the
+      -- eager default registration, not be ignored.
       local original = { filetype = "surrealql", install_info = { url = "original" } }
       local parser_configs = { surrealql = original }
       package.loaded["nvim-treesitter.parsers"] = {
@@ -70,7 +72,9 @@ describe("surrealql", function()
 
       surrealql._register_parser(defaults.treesitter)
 
-      assert.equals("original", parser_configs.surrealql.install_info.url)
+      assert.equals(defaults.treesitter.url, parser_configs.surrealql.install_info.url)
+      assert.equals(defaults.treesitter.branch, parser_configs.surrealql.install_info.branch)
+      assert.equals("surrealql", parser_configs.surrealql.filetype)
     end)
   end)
 end)

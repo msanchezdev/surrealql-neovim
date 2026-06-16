@@ -21,11 +21,15 @@ tree-sitter grammar from https://github.com/surrealdb/surrealql-tree-sitter.
 ==============================================================================
 2. REQUIREMENTS                                     *surrealql-requirements*
 
-  - Neovim >= 0.9.0 (Treesitter highlighting, indentation, folding)
   - Neovim >= 0.10.0 for the bundled LSP auto-installer (uses |vim.system|)
   - nvim-treesitter (https://github.com/nvim-treesitter/nvim-treesitter)
     for syntax highlighting, indentation, and folding
   - A C compiler (gcc/clang) for building the parser
+
+Note: the grammar on `master` is generated at tree-sitter ABI 15, which only
+Neovim 0.12+ can load; on 0.11 the parser is rejected. This affects only the
+Treesitter path — the LSP's semantic-token highlighting works on 0.10/0.11
+regardless, since the server bundles its own tree-sitter runtime.
 
 ==============================================================================
 3. INSTALLATION                                     *surrealql-installation*
@@ -54,7 +58,7 @@ Default configuration: >lua
     treesitter = {
       enable = true,
       url = "https://github.com/surrealdb/surrealql-tree-sitter",
-      branch = "main",
+      branch = "master",
       files = { "src/parser.c", "src/scanner.c" },
     },
     filetype = {

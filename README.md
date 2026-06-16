@@ -15,7 +15,8 @@ Neovim plugin for [SurrealQL](https://surrealdb.com/docs/surrealql), powered by 
 
 ## Requirements
 
-- Neovim >= 0.9.0
+- Neovim >= 0.9.0 (Treesitter highlighting, indentation, folding)
+- Neovim >= 0.10.0 for the bundled LSP auto-installer (it uses `vim.system`)
 - [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter)
 - A C compiler (gcc or clang) for building the parser
 
@@ -71,7 +72,7 @@ require("surrealql").setup({
   lsp = {
     enable = false,
     auto_install = true,
-    cmd = { "surreal-language-server" },
+    cmd = { "surrealql-language-server" },
     on_attach = nil,
     capabilities = nil,
   },
@@ -144,7 +145,7 @@ require("surrealql").setup({
   lsp = {
     enable = true,
     auto_install = false,
-    cmd = { "surreal-language-server" },
+    cmd = { "surrealql-language-server" },
     on_attach = function(client, bufnr)
       -- your keymaps here
     end,
@@ -153,9 +154,21 @@ require("surrealql").setup({
 })
 ```
 
-Prebuilt binaries are available for Linux (x86_64, arm64), macOS (Apple Silicon), and Windows (x86_64). macOS Intel falls back to `cargo install surrealql-language-server` automatically if Rust is available.
+Prebuilt binaries are available for Linux (x86_64, arm64), macOS (Apple Silicon), and Windows (x86_64). On platforms without a prebuilt binary (e.g. macOS Intel) the plugin builds from source: it fetches the tree-sitter grammar and runs `cargo install surrealql-language-server` with `TREE_SITTER_SURREALQL_DIR` pointed at it, so `cargo` (Rust) and `git` are required for that path.
 
-The server provides diagnostics, hover, completions, go-to-definition, references, rename, code actions, signature help, and call hierarchy.
+The server provides:
+
+- **Semantic-token highlighting** (parser-accurate; marks definitions and builtin functions)
+- Diagnostics, hover, completions
+- Go-to-definition, references, document highlight
+- Rename, code actions, signature help, call hierarchy
+- Inlay hints, document & workspace symbols
+
+The semantic tokens **refine** the Treesitter highlighting above rather than
+replacing it — both are active by default (Treesitter is instant and works
+offline; semantic tokens add parser-level accuracy such as definition vs.
+reference and builtin vs. user functions). To use only one, disable the
+other (`vim.lsp.semantic_tokens` / nvim-treesitter `highlight`).
 
 ## Grammar
 

@@ -1,9 +1,8 @@
 local M = {}
 
 function M.start(lsp_config)
-  local root = vim.fs.dirname(
-    vim.fs.find({ ".git", "surreal.json" }, { upward = true })[1]
-  ) or vim.fn.getcwd()
+  local marker = vim.fs.find({ ".git", "surreal.json" }, { upward = true })[1]
+  local root = (marker and vim.fs.dirname(marker)) or vim.fn.getcwd()
 
   vim.lsp.start({
     name = "surrealql",
@@ -50,7 +49,7 @@ function M.setup(lsp_config)
   end
 
   vim.notify(
-    "[surrealql] surreal-language-server not found. Run :SurrealQLInstall or set lsp.auto_install = true.",
+    "[surrealql] surrealql-language-server not found. Run :SurrealQLInstall or set lsp.auto_install = true.",
     vim.log.levels.WARN
   )
 end

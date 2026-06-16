@@ -16,7 +16,7 @@ M.defaults = {
   lsp = {
     enable = false,
     auto_install = true,
-    cmd = { "surreal-language-server" },
+    cmd = { "surrealql-language-server" },
     on_attach = nil,
     capabilities = nil,
   },

@@ -21,7 +21,8 @@ tree-sitter grammar from https://github.com/surrealdb/surrealql-tree-sitter.
 ==============================================================================
 2. REQUIREMENTS                                     *surrealql-requirements*
 
-  - Neovim >= 0.9.0
+  - Neovim >= 0.9.0 (Treesitter highlighting, indentation, folding)
+  - Neovim >= 0.10.0 for the bundled LSP auto-installer (uses |vim.system|)
   - nvim-treesitter (https://github.com/nvim-treesitter/nvim-treesitter)
     for syntax highlighting, indentation, and folding
   - A C compiler (gcc/clang) for building the parser
@@ -61,6 +62,13 @@ Default configuration: >lua
       tabstop = 2,
       shiftwidth = 2,
       expandtab = true,
+    },
+    lsp = {
+      enable = false,
+      auto_install = true,
+      cmd = { "surrealql-language-server" },
+      on_attach = nil,
+      capabilities = nil,
     },
   })
 <
@@ -103,18 +111,28 @@ LSP is disabled by default (`enable = false`). When enabled, the server
 attaches automatically whenever a SurrealQL buffer is opened.
 
 Prebuilt binaries are available for Linux x86_64/arm64, macOS Apple Silicon,
-and Windows x86_64. macOS Intel falls back to `cargo install` if Rust is
-available.
+and Windows x86_64. On platforms without a prebuilt binary (e.g. macOS Intel)
+the plugin builds from source via `cargo install`, fetching the tree-sitter
+grammar and pointing the build at it; this path needs `cargo` (Rust) and
+`git`.
 
 Capabilities provided by the server:
+  • Semantic-token highlighting (definitions, builtin functions)
   • Diagnostics
   • Hover
   • Completions
-  • Go-to definition and references
+  • Go-to definition, references, document highlight
   • Rename
   • Code actions
   • Signature help
   • Call hierarchy
+  • Inlay hints
+  • Document and workspace symbols
+
+The server's semantic tokens refine the Treesitter highlighting rather than
+replacing it; both are active by default. Treesitter is instant and works
+offline, while semantic tokens add parser-level accuracy (definition vs.
+reference, builtin vs. user functions).
 
 ==============================================================================
 7. COMMANDS                                           *surrealql-commands*

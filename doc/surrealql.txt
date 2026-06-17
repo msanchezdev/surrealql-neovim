@@ -26,10 +26,11 @@ tree-sitter grammar from https://github.com/surrealdb/surrealql-tree-sitter.
     for syntax highlighting, indentation, and folding
   - A C compiler (gcc/clang) for building the parser
 
-Note: the grammar on `master` is generated at tree-sitter ABI 15, which only
-Neovim 0.12+ can load; on 0.11 the parser is rejected. This affects only the
-Treesitter path — the LSP's semantic-token highlighting works on 0.10/0.11
-regardless, since the server bundles its own tree-sitter runtime.
+Note: surrealql-tree-sitter#11 moves the grammar to tree-sitter ABI 14, which
+Neovim 0.10+ loads. Until that lands the parser is ABI 15 and needs Neovim
+0.12+ (0.11 rejects it). This affects only the Treesitter path — the LSP's
+semantic-token highlighting works on 0.10+ regardless, since the server
+bundles its own tree-sitter runtime.
 
 ==============================================================================
 3. INSTALLATION                                     *surrealql-installation*

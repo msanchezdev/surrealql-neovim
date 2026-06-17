@@ -19,13 +19,13 @@ Neovim plugin for [SurrealQL](https://surrealdb.com/docs/surrealql), powered by 
 - [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter)
 - A C compiler (gcc or clang) for building the parser
 
-> **Treesitter parser / Neovim ABI:** the grammar on `master` is generated
-> at tree-sitter **ABI 15**, which only **Neovim 0.12+** can load — on 0.11
-> the parser is rejected (`Parser could not be created`). ABI-14 support
-> for 0.11 is tracked in the [grammar repo](https://github.com/surrealdb/surrealql-tree-sitter).
-> This affects only the Treesitter path; the **LSP's semantic-token
-> highlighting is unaffected** (the server carries its own tree-sitter
-> runtime), so LSP highlighting works on 0.10/0.11 regardless.
+> **Treesitter parser / Neovim ABI:** [surrealql-tree-sitter#11](https://github.com/surrealdb/surrealql-tree-sitter/pull/11)
+> moves the grammar to tree-sitter **ABI 14**, which Neovim **0.10+** loads.
+> Until that lands the parser is ABI 15 and needs Neovim **0.12+** (0.11
+> rejects it with `Parser could not be created`). Either way this affects
+> only the Treesitter path — the **LSP's semantic-token highlighting is
+> independent** (the server carries its own tree-sitter runtime) and works
+> on 0.10+ regardless.
 
 ## Installation
 

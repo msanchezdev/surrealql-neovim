@@ -1,9 +1,10 @@
 local M = {}
 
 function M.start(lsp_config)
-  local root = vim.fs.dirname(
-    vim.fs.find({ ".git", "surreal.json" }, { upward = true })[1]
-  ) or vim.fn.getcwd()
+  -- `vim.fs.dirname(nil)` errors, so guard the no-marker case (a `.surql`
+  -- file opened outside any project) instead of crashing on attach.
+  local marker = vim.fs.find({ ".git", "surreal.json" }, { upward = true })[1]
+  local root = (marker and vim.fs.dirname(marker)) or vim.fn.getcwd()
 
   vim.lsp.start({
     name = "surrealql",

@@ -37,21 +37,22 @@ function M._register_parser(ts_config)
   end
 
   local parser_configs = parsers.get_parser_configs()
-  if parser_configs.surrealql then
-    return
-  end
 
-  parser_configs.surrealql = {
-    install_info = {
-      url = ts_config.url,
-      files = ts_config.files,
-      branch = ts_config.branch,
-      generate_requires_npm = false,
-      requires_generate_from_grammar = false,
-    },
-    filetype = "surrealql",
-    maintainers = { "@surrealdb" },
+  -- Update `install_info` on an existing entry rather than bailing out.
+  -- The plugin eager-registers at load with defaults (before `setup()`),
+  -- so returning early when an entry already existed made
+  -- `setup({ treesitter = ... })` a silent no-op. Every caller passes the
+  -- live config, so the post-`setup()` merged config correctly wins.
+  local entry = parser_configs.surrealql
+    or { filetype = "surrealql", maintainers = { "@surrealdb" } }
+  entry.install_info = {
+    url = ts_config.url,
+    files = ts_config.files,
+    branch = ts_config.branch,
+    generate_requires_npm = false,
+    requires_generate_from_grammar = false,
   }
+  parser_configs.surrealql = entry
 end
 
 return M

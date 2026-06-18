@@ -1,6 +1,9 @@
 local M = {}
 
+local uv = vim.uv or vim.loop
+
 local REPO = "surrealdb/surrealql-language-server"
+local GRAMMAR_REPO = "https://github.com/surrealdb/surrealql-tree-sitter"
 
 local PLATFORM_BINARIES = {
   ["linux-x86_64"]  = "surrealql-language-server-linux-amd64",
@@ -10,7 +13,7 @@ local PLATFORM_BINARIES = {
 }
 
 local function platform_key()
-  local uname = vim.uv.os_uname()
+  local uname = uv.os_uname()
   local sys = uname.sysname:lower()
   local arch = uname.machine:lower()
 
@@ -27,7 +30,7 @@ end
 
 function M.bin_path()
   local name = "surrealql-language-server"
-  if vim.uv.os_uname().sysname:lower():find("windows") then
+  if uv.os_uname().sysname:lower():find("windows") then
     name = name .. ".exe"
   end
   return vim.fn.stdpath("data") .. "/surrealql/bin/" .. name
@@ -59,10 +62,42 @@ local function download(filename, on_done)
       end)
       return
     end
-    vim.uv.fs_chmod(dest, 493) -- 0755
+    uv.fs_chmod(dest, 493) -- 0755
     vim.schedule(function()
       vim.notify("[surrealql] Language server installed.", vim.log.levels.INFO)
       on_done(true, dest)
+    end)
+  end)
+end
+
+-- The published crate's build.rs compiles against the sibling tree-sitter
+-- grammar repo (`../surrealql-tree-sitter` or `TREE_SITTER_SURREALQL_DIR`)
+-- and is not bundled with it, so a bare `cargo install` panics. Fetch the
+-- grammar into the plugin's data dir and point the build at it.
+local function ensure_grammar(on_done)
+  local dir = vim.fn.stdpath("data") .. "/surrealql/surrealql-tree-sitter"
+  if vim.fn.isdirectory(dir) == 1 then
+    on_done(true, dir)
+    return
+  end
+  if vim.fn.executable("git") == 0 then
+    vim.notify(
+      "[surrealql] git not found; cannot fetch the tree-sitter grammar needed to build from source.",
+      vim.log.levels.ERROR
+    )
+    on_done(false)
+    return
+  end
+  vim.fn.mkdir(vim.fn.fnamemodify(dir, ":h"), "p")
+  vim.notify("[surrealql] Fetching tree-sitter grammar for build...", vim.log.levels.INFO)
+  vim.system({ "git", "clone", "--depth", "1", GRAMMAR_REPO, dir }, {}, function(result)
+    vim.schedule(function()
+      if result.code ~= 0 then
+        vim.notify("[surrealql] Grammar clone failed: " .. (result.stderr or ""), vim.log.levels.ERROR)
+        on_done(false)
+        return
+      end
+      on_done(true, dir)
     end)
   end)
 end
@@ -77,21 +112,45 @@ local function cargo_install(on_done)
     return
   end
 
-  vim.notify("[surrealql] Building language server via cargo (this may take a while)...", vim.log.levels.INFO)
-
-  vim.system({ "cargo", "install", "surrealql-language-server" }, {}, function(result)
-    if result.code ~= 0 then
-      vim.schedule(function()
-        vim.notify("[surrealql] cargo install failed: " .. (result.stderr or ""), vim.log.levels.ERROR)
-        on_done(false)
-      end)
+  ensure_grammar(function(ok, grammar_dir)
+    if not ok then
+      on_done(false)
       return
     end
-    vim.schedule(function()
-      vim.notify("[surrealql] Language server installed via cargo.", vim.log.levels.INFO)
-      on_done(true, "surrealql-language-server")
-    end)
+    vim.notify("[surrealql] Building language server via cargo (this may take a while)...", vim.log.levels.INFO)
+    vim.system(
+      { "cargo", "install", "surrealql-language-server" },
+      { env = { TREE_SITTER_SURREALQL_DIR = grammar_dir } },
+      function(result)
+        if result.code ~= 0 then
+          vim.schedule(function()
+            vim.notify("[surrealql] cargo install failed: " .. (result.stderr or ""), vim.log.levels.ERROR)
+            on_done(false)
+          end)
+          return
+        end
+        vim.schedule(function()
+          vim.notify("[surrealql] Language server installed via cargo.", vim.log.levels.INFO)
+          -- Installed onto ~/.cargo/bin, expected to be on PATH.
+          on_done(true, "surrealql-language-server")
+        end)
+      end
+    )
   end)
+end
+
+-- Auto-install relies on `vim.system` (Neovim 0.10+). Fail loudly on older
+-- versions rather than throwing a nil-call error mid-install.
+local function ensure_system()
+  if vim.system then
+    return true
+  end
+  vim.notify(
+    "[surrealql] Automatic install requires Neovim 0.10+. Install surrealql-language-server "
+      .. "manually and point lsp.cmd at it (auto_install = false).",
+    vim.log.levels.ERROR
+  )
+  return false
 end
 
 function M.install(on_done)
@@ -101,6 +160,11 @@ function M.install(on_done)
   if ok then
     vim.notify("[surrealql] Language server is already installed.", vim.log.levels.INFO)
     on_done(true)
+    return
+  end
+
+  if not ensure_system() then
+    on_done(false)
     return
   end
 
